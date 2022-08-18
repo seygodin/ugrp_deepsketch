@@ -381,9 +381,7 @@ class RevisedNetwork(torch.nn.Module):
 
         last_denseSize = _denseSize1
         if _denseSize2 > 0:
-            self.layers.append(nn.Linear(_denseSize1, _denseSize2))
-            self.layers.append(nn.ReLU())
-            self.layers.append(nn.Linear(_denseSize2, _denseSize1))
+            self.layers.append(nn.Linear(_denseSize1, _denseSize1))
             self.layers.append(nn.ReLU())
             self.layers.append(nn.Linear(_denseSize1, _denseSize2))
             self.layers.append(nn.ReLU())
