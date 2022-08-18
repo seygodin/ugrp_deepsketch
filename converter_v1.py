@@ -84,8 +84,8 @@ class RevisedNetwork(torch.nn.Module):
 
         self.conv_layers = []
         self.layers = []
-
-        # The structure is copied from train_baseline.py
+        self.fc_plus = []
+    
         self.conv_layers.append(nn.Conv1d(in_channels=1, out_channels=8, kernel_size=3, stride=1, padding=1, bias=True))
         self.conv_layers.append(nn.ReLU())
         self.conv_layers.append(nn.BatchNorm1d(8))
@@ -110,11 +110,15 @@ class RevisedNetwork(torch.nn.Module):
         self.layers.append(nn.Linear(4096 * 4, _denseSize1))
         self.layers.append(nn.ReLU())
         self.layers.append(nn.Dropout(p=0.5))
-
-        self.layers.append(nn.Linear(_denseSize1, _denseSize2))
-        self.layers.append(nn.ReLU())
-        self.layers.append(nn.Dropout(p=0.5))
-        last_denseSize = _denseSize2
+        
+        last_denseSize = _denseSize1
+        if _denseSize2 > 0:
+            self.layers.append(nn.Linear(_denseSize1, _denseSize1))
+            self.layers.append(nn.ReLU())
+            self.layers.append(nn.Linear(_denseSize1, _denseSize2))
+            self.layers.append(nn.ReLU())
+            self.layers.append(nn.Dropout(p=0.5))
+            last_denseSize = _denseSize2
 
         self.conv_layers = nn.ModuleList(self.conv_layers)
         self.layers = nn.ModuleList(self.layers)
@@ -128,8 +132,8 @@ class RevisedNetwork(torch.nn.Module):
             x = l(x)
 
         x = x.view(x.shape[0], -1)
-        # for l in self.layers:
-        #            x = l(x)
+#for l in self.layers:
+#            x = l(x)
         x = self.layers[0](x)
 
         x = self.fc_plus(x)
