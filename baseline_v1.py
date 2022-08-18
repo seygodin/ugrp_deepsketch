@@ -39,15 +39,12 @@ if os.path.exists(fileprefix + ".torchsave"):
 
 logfile = open(fileprefix + ".log", 'w')
 
-
 def log(logstr):
     print(logstr)
     logfile.write(logstr + '\n')
 
-
 # Read data
 from glob import glob
-
 original_data = glob(os.path.join(path, '*/*'))
 log("Original data:" + str(len(original_data)))
 
@@ -58,10 +55,10 @@ test_data = []
 
 random.seed(1)
 for i in range(numCluster):
-    name = glob(os.path.join(path, '{}/*'.format(i)))
+    name = glob(os.path.join(path,'{}/*'.format(i)))
     random.shuffle(name)
     n = len(name)
-
+    
     train_data += name[:n // 10]
     test_data += name[n // 10:]
 
@@ -75,8 +72,7 @@ def files_to_hash(files, sampling):
     for fn in sorted(files):
         m.update(fn.encode())
 
-    return m.hexdigest()[:16]  # Use the first 16 chars. It's too long
-
+    return m.hexdigest()[:16] # Use the first 16 chars. It's too long
 
 # Use it for large datasets
 class RuntimeLoader:
@@ -88,7 +84,7 @@ class RuntimeLoader:
 
     def __iter__(self):
         return self
-
+    
     def __next__(self):
         num = self.num
         nowlen = min(len(self.dataset) - num, BATCH_SIZE)
@@ -101,8 +97,7 @@ class RuntimeLoader:
                     data = f.read()
                 data = [int(d) for d in data]
                 ret1[i] = data
-                ret2.append(
-                    int(self.dataset[num + i][self.dataset[num + i].rfind('/') + 1:self.dataset[num + i].rfind('_')]))
+                ret2.append(int(self.dataset[num + i][self.dataset[num + i].rfind('/') + 1:self.dataset[num + i].rfind('_')]))
             ret = [(torch.tensor(ret1) - 128) / 128.0, torch.tensor(ret2)]
 
             for i in range(len(ret)):
@@ -110,7 +105,6 @@ class RuntimeLoader:
             return ret
         else:
             raise StopIteration
-
 
 # Use it when the data is small enough to store in the main memory
 class Loader:
@@ -125,12 +119,12 @@ class Loader:
             random.seed(1)
             random.shuffle(self.dataset)
             if sampling < 1.0:
-                self.dataset = self.dataset[:int(len(self.dataset) * sampling)]
+                self.dataset = self.dataset[:int(len(self.dataset)*sampling)]
             self.alldata = self.load_data()
             self.alllen = self.alldata[2]
             with open(picklename, 'wb') as f:
                 pickle.dump(self.alldata, f)
-
+        
         self.num = 0
 
     def load_data(self):
@@ -140,11 +134,11 @@ class Loader:
         for i in range(alllen):
             with open(self.dataset[i], 'rb') as f:
                 data = f.read()
-            data = [int(d) for d in data]
+            data = [int(d)for d in data]
             ret1[i] = data
             fn = self.dataset[i]
             ret2.append(int(fn[fn.rfind('/') + 1:fn.rfind('_')]))
-        return ((torch.tensor(ret1) - 128) / 128.0), torch.tensor(ret2), alllen
+        return ((torch.tensor(ret1)-128)/128.0), torch.tensor(ret2), alllen
 
     def __iter__(self):
         return self
@@ -152,11 +146,11 @@ class Loader:
     def __next__(self):
         num = self.num
         nowlen = min(self.alllen - num, BATCH_SIZE)
-
+        
         if nowlen > 0:
             self.num += nowlen
-            ret1 = self.alldata[0][num:num + nowlen]
-            ret2 = self.alldata[1][num:num + nowlen]
+            ret1 = self.alldata[0][num:num+nowlen]
+            ret2 = self.alldata[1][num:num+nowlen]
             ret = [ret1, ret2]
 
             for i in range(len(ret)):
@@ -164,13 +158,11 @@ class Loader:
             return ret
         else:
             raise StopIteration
-
-
+           
 train_data_tensor = list(Loader(train_data, 1.0))
-# test_data_tensor = list(RuntimeLoader(test_data))
+#test_data_tensor = list(RuntimeLoader(test_data))
 
 log("Tensor conversion done")
-
 
 def test(model, test_loader, epoch, print_progress=False):
     model.eval()
@@ -183,27 +175,21 @@ def test(model, test_loader, epoch, print_progress=False):
         for data, target in test_loader:
             output = model(data)
             prob, label = output.topk(5, 1, True, True)
-
+            
             expanded = target.view(target.size(0), -1).expand_as(label)
             compare = label.eq(expanded).float()
-
+            
             total += len(data)
-            correct_1 += int(compare[:, :1].sum())
-            correct_5 += int(compare[:, :5].sum())
+            correct_1 += int(compare[:,:1].sum())
+            correct_5 += int(compare[:,:5].sum())
 
             cnt += 1
             if print_progress and (cnt % 1000 == 0):
-                log('Test Epoch: {}, Top 1 accuracy: {}/{} ({:.2f}%), Top 5 accuracy: {}/{} ({:.2f}%)'.format(epoch,
-                                                                                                              correct_1,
-                                                                                                              total,
-                                                                                                              100. * correct_1 / total,
-                                                                                                              correct_5,
-                                                                                                              total,
-                                                                                                              100. * correct_5 / total))
+                log('Test Epoch: {}, Top 1 accuracy: {}/{} ({:.2f}%), Top 5 accuracy: {}/{} ({:.2f}%)'.format(epoch, correct_1, total, 100. * correct_1 / total, correct_5, total, 100. * correct_5 / total))
 
     log('Test Epoch: {}, Top 1 accuracy: {}/{} ({:.2f}%), Top 5 accuracy: {}/{} ({:.2f}%)'.format(
-        epoch, correct_1, total, 100. * correct_1 / total,
-        correct_5, total, 100. * correct_5 / total))
+                epoch, correct_1, total, 100. * correct_1 / total,
+                correct_5, total, 100. * correct_5 / total))
     return (test_loss / total, correct_1, correct_5)
 
 
@@ -215,11 +201,9 @@ def do_test(sampling, print_progress=False):
 
     test(hidden_model, it, epoch, print_progress)
 
-
 def do_eval(sampling):
     it = Loader(train_data, sampling)
     test(hidden_model, it, epoch)
-
 
 class RevisedNetwork(torch.nn.Module):
     def __init__(self):
@@ -249,15 +233,16 @@ class RevisedNetwork(torch.nn.Module):
         self.conv_layers.append(nn.BatchNorm1d(32))
         self.conv_layers.append(nn.MaxPool1d(2))
 
+
+
         self.layers.append(nn.Linear(4096 * 4, _denseSize1))
         self.layers.append(nn.ReLU())
         self.layers.append(nn.Dropout(p=0.5))
 
+
         last_denseSize = _denseSize1
         if _denseSize2 > 0:
-            self.layers.append(nn.Linear(_denseSize1, _denseSize2))
-            self.layers.append(nn.ReLU())
-            self.layers.append(nn.Linear(_denseSize2, _denseSize1))
+            self.layers.append(nn.Linear(_denseSize1, _denseSize1))
             self.layers.append(nn.ReLU())
             self.layers.append(nn.Linear(_denseSize1, _denseSize2))
             self.layers.append(nn.ReLU())
@@ -268,6 +253,8 @@ class RevisedNetwork(torch.nn.Module):
 
         self.conv_layers = nn.ModuleList(self.conv_layers)
         self.layers = nn.ModuleList(self.layers)
+
+
 
     def forward(self, x):
         x = x.unsqueeze(dim=1)
@@ -280,12 +267,12 @@ class RevisedNetwork(torch.nn.Module):
         x = self.fc(x)
         output = F.log_softmax(x, dim=1)
         return output
-
+        
 
 hidden_model = RevisedNetwork()
 
-hidden_model = hidden_model.to(device)
-optimizer = optim.Adam(hidden_model.parameters(), lr=_lr, weight_decay=1e-4)
+hidden_model= hidden_model.to(device)
+optimizer = optim.Adam(hidden_model.parameters(), lr = _lr, weight_decay=1e-4)
 
 loss = []
 prevtime = time.time()
@@ -302,13 +289,13 @@ for epoch in range(1, 351):
 
     train_loss = train_loss / len(train_data_tensor)
     log('Epoch: {}\tLoss: {:.6f}\t{}'.format(
-        epoch, train_loss, time.time() - prevtime))
+        epoch, train_loss, time.time()-prevtime))
     prevloss.append(train_loss)
-#    if len(prevloss) >= 10:
-#        mx = max(prevloss[-10:])
-#        mi = min(prevloss[-10:])
-#        if (mx - mi) / mi < 0.05:
-#            break
+    if len(prevloss) >= 10:
+        mx = max(prevloss[-10:])
+        mi = min(prevloss[-10:])
+        if (mx - mi) / mi < 0.05:
+            break
 
     prevtime = time.time()
 
