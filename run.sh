@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ "$#" -ne 8 ]
+then
+  echo "Usage: ./run.sh [input_file] [num_thread] [tag] [hashSize] [which_dense] [lr] [alpha] [threshold]"
+  exit 0
+fi
+
 input_file=$1
 num_thread=$2
 
@@ -16,7 +22,8 @@ threshold=$8
 ./03_clustering/fine $input_file $num_thread < 03_clustering/coarse_out_${tag} > 03_clustering/fine_out_${tag}
 
 ./04_training/dataset $input_file $tag < 03_clustering/fine_out_${tag}
-cluster_info="cluster_${tag}_15"
+cluster=$(find . -name "cluster_${tag}_*")
+cluster_info="${cluster:2}"
 python 04_training/train_baseline.py ${cluster_info}
 model_name="model_${tag}_4096_2048_1e-05.torchsave"
 python3 04_training/train_hashlayer_gh.py model/${model_name} ${cluster_info} ${hashSize} ${which_dense} ${lr} ${alpha}
