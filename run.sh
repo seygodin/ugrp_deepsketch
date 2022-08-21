@@ -32,3 +32,5 @@ python3 04_training/model_converter_gh.py model/${hash_name}
 
 script_module="${hash_name}.pt"
 ./05_infer/DeepSketch ${input_file} model/${script_module} ${threshold}
+
+python run_call.py
