@@ -1,8 +1,6 @@
 import os
 from twilio.rest import Client
 
-os.system("./run.sh 03_clustering/test_set 256 LSE1 128 1 0.001 0.05 128")
-
 # Find your Account SID and Auth Token at twilio.com/console
 # and set the environment variables. See http://twil.io/secure
 
