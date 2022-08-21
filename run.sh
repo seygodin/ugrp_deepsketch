@@ -28,7 +28,7 @@ python 04_training/train_baseline.py ${cluster_info}
 model_name="model_${tag}_4096_2048_1e-05.torchsave"
 python3 04_training/train_hashlayer_gh.py model/${model_name} ${cluster_info} ${hashSize} ${which_dense} ${lr} ${alpha}
 hash_name="model_hash_${tag}_${hashSize}_4096_2048_${which_dense}_${lr}.torchsave"
-python3 04_training/model_converter_gh.py model/${hash_name}
+python3 04_training/model_converter_gh.py model/${hash_name} ${cluster_info}
 
 script_module="${hash_name}.pt"
 ./05_infer/DeepSketch ${input_file} model/${script_module} ${threshold}
