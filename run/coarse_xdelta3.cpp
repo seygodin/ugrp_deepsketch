@@ -149,10 +149,10 @@ void bruteForceCluster(vector<int>& todo, vector<vector<int>>& cluster, int thre
 			produceQ.push(i + MAX_QSIZE);
 			pthread_mutex_unlock(&mutex);
 		}
-
+/*
 		if (1) {
 			fprintf(stderr, "%d, qsize: %d, rep_cnt: %d\n", i, (int)resultQ.size(), rep_cnt);
-		}
+		}*/
 	}
 	pthread_mutex_lock(&mutex);
 	produceQ.push(INF);
